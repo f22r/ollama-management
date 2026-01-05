@@ -10,6 +10,7 @@ build/
 dist/
 
 # Environment
+.env
 .env*.local
 
 # Debug
