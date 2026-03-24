@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 const navigation = [
     {
@@ -82,7 +83,7 @@ export default function Sidebar() {
             <div className="sidebar-header">
                 <div className="sidebar-logo">
                     {/* <OllamaLogo /> */}
-                    <img src="/VenusLogo.png" alt="Logo" className="ollama-logo" width="32" height="32" />
+                    <Image src="/VenusLogo.png" alt="Logo" className="ollama-logo" width={32} height={32} />
                     <div className="logo-text">
                         <span className="logo-title">Ollama</span>
                         <span className="logo-subtitle">Management</span>

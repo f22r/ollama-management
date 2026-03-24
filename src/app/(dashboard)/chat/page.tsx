@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Button, Select, Textarea, Input } from '@/components/ui';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -298,18 +298,8 @@ export default function ChatPage() {
     const abortControllerRef = useRef<AbortController | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        fetchModels();
-        fetchPresets();
-        fetchSeasons(); // New fetch
-        fetchSessions();
-    }, []);
 
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, streamContent]);
-
-    const fetchModels = async () => {
+    const fetchModels = React.useCallback(async () => {
         try {
             const res = await fetch('/api/models');
             if (res.ok) {
@@ -322,7 +312,34 @@ export default function ChatPage() {
         } catch (error) {
             console.error('Failed to fetch models:', error);
         }
-    };
+    }, [selectedModel]);
+
+    const fetchSessions = React.useCallback(async () => {
+        try {
+            const res = await fetch('/api/chat-sessions');
+            if (res.ok) {
+                const data = await res.json();
+                setSessions(data.sessions || []);
+                if (data.sessions?.length && !activeSessionId) {
+                    loadSession(data.sessions[0].id);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch sessions:', error);
+        }
+    }, [activeSessionId]);
+
+    useEffect(() => {
+        fetchModels();
+        fetchPresets();
+        fetchSeasons(); // New fetch
+        fetchSessions();
+    }, [fetchModels, fetchSessions]);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages, streamContent]);
+
 
     const fetchPresets = async () => {
         try {
@@ -345,21 +362,6 @@ export default function ChatPage() {
             }
         } catch (error) {
             console.error('Failed to fetch seasons:', error);
-        }
-    };
-
-    const fetchSessions = async () => {
-        try {
-            const res = await fetch('/api/chat-sessions');
-            if (res.ok) {
-                const data = await res.json();
-                setSessions(data.sessions || []);
-                if (data.sessions?.length && !activeSessionId) {
-                    loadSession(data.sessions[0].id);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to fetch sessions:', error);
         }
     };
 

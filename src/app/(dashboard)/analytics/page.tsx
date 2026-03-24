@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MetricCard, Badge, Button, Tabs } from '@/components/ui';
 import type { AnalyticsData, RequestLog } from '@/types';
 
@@ -11,11 +11,7 @@ export default function AnalyticsPage() {
     const [activeTab, setActiveTab] = useState('overview');
     const [timeRange, setTimeRange] = useState(24);
 
-    useEffect(() => {
-        fetchData();
-    }, [timeRange]);
-
-    const fetchData = async () => {
+    const fetchData = React.useCallback(async () => {
         try {
             const res = await fetch(`/api/analytics?hours=${timeRange}&logs=true`);
             if (res.ok) {
@@ -28,7 +24,11 @@ export default function AnalyticsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [timeRange]);
+
+    useEffect(() => {
+        fetchData();
+    }, [timeRange, fetchData]);
 
     const cleanLogs = async () => {
         try {

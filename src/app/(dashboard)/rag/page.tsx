@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Badge, Modal, Input, Textarea, Tabs, Select, Toggle } from '@/components/ui';
 import type { RagSeason, RagChunk, OllamaModel } from '@/types';
 
@@ -11,15 +11,15 @@ const IconPlus = () => (
     </svg>
 );
 
-const IconSearch = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+const IconSearch = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18" {...props}>
         <circle cx="11" cy="11" r="8" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
     </svg>
 );
 
-const IconDatabase = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
+const IconDatabase = ({ width = 48, height = 48 }: { width?: number; height?: number }) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width={width} height={height}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
     </svg>
 );
@@ -30,8 +30,8 @@ const IconX = () => (
     </svg>
 );
 
-const IconBrain = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+const IconBrain = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16" {...props}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
     </svg>
 );
@@ -81,6 +81,34 @@ export default function RagPage() {
         }
     }, [selectedSeason]);
 
+
+    const performSearch = React.useCallback(async () => {
+        if (!searchQuery.trim() || !selectedSeason) return;
+
+        setIsSearching(true);
+        try {
+            const res = await fetch('/api/rag/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query: searchQuery,
+                    seasonId: selectedSeason.id,
+                    topK: 10,
+                    useSemanticSearch,
+                }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setSearchResults(data.results || []);
+            }
+        } catch (error) {
+            console.error('Search failed:', error);
+        } finally {
+            setIsSearching(false);
+        }
+    }, [searchQuery, selectedSeason, useSemanticSearch]);
+
     // Debounced search
     useEffect(() => {
         if (!searchQuery.trim() || !selectedSeason) {
@@ -93,7 +121,7 @@ export default function RagPage() {
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [searchQuery, selectedSeason, useSemanticSearch]);
+    }, [searchQuery, selectedSeason, useSemanticSearch, performSearch]);
 
     const fetchData = async () => {
         try {
@@ -140,32 +168,6 @@ export default function RagPage() {
         }
     };
 
-    const performSearch = async () => {
-        if (!searchQuery.trim() || !selectedSeason) return;
-
-        setIsSearching(true);
-        try {
-            const res = await fetch('/api/rag/search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    query: searchQuery,
-                    seasonId: selectedSeason.id,
-                    topK: 10,
-                    useSemanticSearch,
-                }),
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                setSearchResults(data.results || []);
-            }
-        } catch (error) {
-            console.error('Search failed:', error);
-        } finally {
-            setIsSearching(false);
-        }
-    };
 
     const createSeason = async () => {
         if (!formData.name || !formData.model) return;
@@ -332,7 +334,7 @@ export default function RagPage() {
                 {/* Seasons List */}
                 <div className="card animate-slideInLeft">
                     <h3 style={{ marginBottom: 'var(--space-md)', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                        <IconDatabase style={{ width: 20, height: 20 }} />
+                        <IconDatabase width={20} height={20} />
                         Seasons
                     </h3>
                     {seasons.length === 0 ? (
@@ -564,7 +566,7 @@ export default function RagPage() {
                                                     </span>
                                                 </div>
                                                 <div className="flex gap-xs">
-                                                    <Button size="sm" variant="success" onClick={(e) => approveQueueItem(item.id, e)}>
+                                                    <Button size="sm" variant="secondary" onClick={(e) => approveQueueItem(item.id, e)}>
                                                         Approve
                                                     </Button>
                                                     <Button size="sm" variant="danger" onClick={(e) => rejectQueueItem(item.id, e)}>
